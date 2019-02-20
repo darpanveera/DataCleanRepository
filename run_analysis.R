@@ -1,6 +1,8 @@
 run_analysis <- function(){
 
   # Set the path to read the appropriate files  
+  library(dplyr)
+  library(sqldf)
   mypath = "C:/Darpan/DataScience/Course3/Assignment"
   setwd(mypath)
   
@@ -39,28 +41,41 @@ run_analysis <- function(){
   colnames(actlbl) <- c("No","Activity")
   colnames(mrglbl) <- c("No")
   
+  #The below variable(s) are to Read the subject data from subject test and train text files
+  subtst <- read.csv("subject_test.txt", header = FALSE, sep="")
+  subtrn <- read.csv("subject_train.txt", header = FALSE, sep="")
+  
+  #The below variable is to Merge the activity label files into one
+  mrgsbj <- rbind(subtst,subtrn)
+  
   
   #The below variable Join(s) the data to extract the activity labels for test and train
-  library(sqldf)
+  
   fnlActLbl <- sqldf("SELECT Activity from mrglbl join actlbl  using(No)")
 
   #3.	Uses descriptive activity names to name the activities in the data set
-  finalResult <- cbind(fnlActLbl[,1],mndata)
+  finalResultActy <- cbind(fnlActLbl[,1],mndata)
+  finalResultActySub <- cbind(mrgsbj, finalResultActy)
+  
+  
   
   #4.	Appropriately labels the data set with descriptive variable names.
-  names(finalResult) <- make.names(names(finalResult))
-  # print(head(finalResult))
-  library(dplyr)
+  
+  colnames(finalResultActySub)[1] <- "Subject"
+  colnames(finalResultActySub)[2] <- "Activity"
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "\\-|\\(|\\)", replacement = "")
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "^t", replacement = "Time") 
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "Acc", replacement = "Accelerometer") 
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "Gyro", replacement = "Gyroscope") 
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "Mag", replacement = "Magnitude") 
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "^f", replacement = "Frequency")
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "mean", replacement = "Mean") 
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "std", replacement = "StandardDeviation")
+  names(finalResultActySub) <- gsub(x = names(finalResultActySub), pattern = "BodyBody", replacement = "Body") 
+  
   
   #5.	From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
-  write.table(finalResult %>% group_by(fnlActLbl...1.) %>% summarise_all(funs(mean)), file = "DataClean.txt", row.names = FALSE)
+  write.table(finalResultActySub %>% group_by(Subject, Activity) %>% summarise_all(funs(mean)), file = "Cleaned_DataSet.txt", row.names = FALSE)
   
-  # with(finalResult, by(finalResult, "fnlActlbl...1", mean))
-  
-   # print(head(merge(actlbl,lbltst, by="No")))
-
-  # print(head(merge(,lbltst,actlbl, by="V1")))
-  # rdtst <- read.csv("y_test.txt",header = FALSE, sep = "",na.strings = "NA", colClasses = "numeric")
-  # rdtrn <- read.csv("y_train.txt",header = FALSE,sep = "",na.strings = "NA", colClasses = "numeric")
 }
 run_analysis()
